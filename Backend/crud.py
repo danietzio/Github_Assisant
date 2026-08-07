@@ -1,21 +1,23 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
+from security import hash_password, verify_password, create_access_token
 from models import User, Repo
-from schemas import UserCreate, RepoCreate
+from schemas import UserCreate, LoginRequest, Token, RepoCreate
+from fastapi import HTTPException
 
-
+# User queries
+# Sign up user crud request
 async def create_user(
     db: AsyncSession,
     user_data: UserCreate
 ) -> User:
 
+
     new_user = User(
         username=user_data.username,
         email=user_data.email,
-        name="",
-        lastname="",
+        password_hash= hash_password(user_data.password)
     )
 
     db.add(new_user)
@@ -24,6 +26,32 @@ async def create_user(
     await db.refresh(new_user)
 
     return new_user
+
+
+# Login user crud request
+async def login_user(
+    db: AsyncSession,
+    user_data: LoginRequest
+) -> Token | None:
+
+    query = (
+        select(User)
+        .where(User.username == user_data.username)
+    )
+
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found") 
+
+    is_verified = verify_password(user_data.password, user.hashed_password)
+
+    if(is_verified):
+        token = create_access_token({
+            'sub': str(user.id)
+        })
+        return Token(access_token=token, token_type='bearer')
 
 
 async def read_user_by_id(
@@ -42,6 +70,7 @@ async def read_user_by_id(
     return result.scalar_one_or_none()
 
 
+# Repo Queries
 async def create_repo(
     db: AsyncSession,
     repo_data: RepoCreate,
@@ -60,7 +89,6 @@ async def create_repo(
     await db.refresh(new_repo)
 
     return new_repo
-
 
 async def read_repo(
     db: AsyncSession,

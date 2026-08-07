@@ -4,6 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -13,6 +14,7 @@ class User(Base):
     lastname: Mapped[str] = mapped_column(String)
     username: Mapped[str] = mapped_column(String(40), unique=True)
     email: Mapped[str] = mapped_column(String(100))
+    hashed_password: Mapped[str] = mapped_column(String(255))
 
     liked_repos: Mapped[list["Repo"]] = relationship(
         back_populates="user"

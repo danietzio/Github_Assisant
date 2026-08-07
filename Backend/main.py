@@ -22,11 +22,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-@app.post(
-    "/users/",
-    response_model=schemas.UserRead,
-    status_code=status.HTTP_201_CREATED,
-)
+# Registration Process
+@app.post("/users/",response_model=schemas.UserRead,status_code=status.HTTP_201_CREATED)
+
 async def create_user_endpoint(
     user_in: schemas.UserCreate,
     db: AsyncSession = Depends(get_db),
@@ -34,3 +32,15 @@ async def create_user_endpoint(
     user = await crud.create_user(db, user_in)
 
     return user
+
+# Login Process
+@app.post("/auth/login", response_model=schemas.Token, status_code=status.HTTP_200_OK)
+
+async def login_user_endpoint(
+    user_in: schemas.LoginRequest,
+    db: AsyncSession = Depends(get_db),
+):
+
+    token = await crud.login_user(db, user_in)
+
+    return token

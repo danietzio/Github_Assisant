@@ -15,10 +15,11 @@ engine = create_async_engine(
     echo=True,
 )
 
+# Expire_on_commit is False for now, but it should change later
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
-    expire_on_commit=True,
+    expire_on_commit=False,
 )
 
 
