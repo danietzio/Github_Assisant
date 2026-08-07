@@ -1,29 +1,33 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
-# -- post schemas --
+
 class RepoBase(BaseModel):
-  title: str
-  link: str
+    title: str
+    link: str
+
 
 class RepoCreate(RepoBase):
-  pass
+    pass
+
 
 class RepoRead(RepoBase):
-  id: int
-  user_id: int
+    model_config = ConfigDict(from_attributes=True)
 
-  model_config: ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
 
-# -- User Schemas --
+
 class UserBase(BaseModel):
-  username: str
-  email: str
+    username: str
+    email: str
+
 
 class UserCreate(UserBase):
-  pass
+    pass
+
 
 class UserRead(UserBase):
-  id: int
-  liked_repos: list[RepoRead] = []
+    model_config = ConfigDict(from_attributes=True)
 
-  model_config = ConfigDict(from_attributes=True)
+    id: int
+    liked_repos: list[RepoRead] = Field(default_factory=list)
