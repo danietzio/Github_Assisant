@@ -7,6 +7,8 @@ import crud
 import schemas
 from database import Base, engine, get_db
 
+from dependecies import get_current_user
+from models import User
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -44,3 +46,10 @@ async def login_user_endpoint(
     token = await crud.login_user(db, user_in)
 
     return token
+
+@app.get("/users/get", response_model=schemas.UserRead, status_code=status.HTTP_200_OK)
+
+async def get_my_profile(
+    current_user: User = Depends(get_current_user)
+):
+    return current_user

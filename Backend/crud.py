@@ -1,23 +1,27 @@
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from security import hash_password, verify_password, create_access_token
+
 from models import User, Repo
 from schemas import UserCreate, LoginRequest, Token, RepoCreate
-from fastapi import HTTPException
+from security import (
+    hash_password,
+    verify_password,
+    create_access_token,
+)
 
 # User queries
 # Sign up user crud request
 async def create_user(
     db: AsyncSession,
-    user_data: UserCreate
+    user_data: UserCreate,
 ) -> User:
-
 
     new_user = User(
         username=user_data.username,
         email=user_data.email,
-        password_hash= hash_password(user_data.password)
+        password_hash=hash_password(user_data.password),
     )
 
     db.add(new_user)
@@ -31,8 +35,8 @@ async def create_user(
 # Login user crud request
 async def login_user(
     db: AsyncSession,
-    user_data: LoginRequest
-) -> Token | None:
+    user_data: LoginRequest,
+) -> Token:
 
     query = (
         select(User)
@@ -40,18 +44,32 @@ async def login_user(
     )
 
     result = await db.execute(query)
+
     user = result.scalar_one_or_none()
 
     if user is None:
-        raise HTTPException(status_code=401, detail="User not found") 
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+        )
 
-    is_verified = verify_password(user_data.password, user.hashed_password)
+    if not verify_password(
+        user_data.password,
+        user.hashed_password,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+        )
 
-    if(is_verified):
-        token = create_access_token({
-            'sub': str(user.id)
-        })
-        return Token(access_token=token, token_type='bearer')
+    token = create_access_token({
+        "sub": str(user.id),
+    })
+
+    return Token(
+        access_token=token,
+        token_type="bearer",
+    )
 
 
 async def read_user_by_id(
