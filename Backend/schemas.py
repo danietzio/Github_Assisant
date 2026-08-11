@@ -24,6 +24,10 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+class UserCreated(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
 
 class UserRead(UserBase):
     model_config = ConfigDict(from_attributes=True)

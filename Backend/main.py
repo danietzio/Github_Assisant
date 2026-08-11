@@ -10,6 +10,8 @@ from database import Base, engine, get_db
 from dependecies import get_current_user
 from models import User
 
+from fastapi.middleware.cors import CORSMiddleware
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
@@ -23,9 +25,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_headers=["*"],
+    allow_methods=["*"]
+)
 
 # Registration Process
-@app.post("/users/",response_model=schemas.UserRead,status_code=status.HTTP_201_CREATED)
+@app.post("/auth/signup",response_model=schemas.UserCreated,status_code=status.HTTP_201_CREATED)
 
 async def create_user_endpoint(
     user_in: schemas.UserCreate,

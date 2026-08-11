@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from models import User, Repo
-from schemas import UserCreate, LoginRequest, Token, RepoCreate
+from schemas import UserCreate, LoginRequest, Token, RepoCreate, UserCreated
 from security import (
     hash_password,
     verify_password,
@@ -21,7 +21,7 @@ async def create_user(
     new_user = User(
         username=user_data.username,
         email=user_data.email,
-        password_hash=hash_password(user_data.password),
+        hashed_password=hash_password(user_data.password),
     )
 
     db.add(new_user)
