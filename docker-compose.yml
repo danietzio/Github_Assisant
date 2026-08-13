@@ -32,5 +32,11 @@ services:
       postgres:
         condition: service_healthy
 
+  fronend:
+    build: ./Frontend
+
+    ports:
+      - '3000:3000'
+
 volumes:
   postgres_data:
