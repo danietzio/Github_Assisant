@@ -3,13 +3,16 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from models import User, Repo
-from schemas import UserCreate, LoginRequest, Token, RepoCreate, UserCreated
+from models import User, Repository
+from schemas import UserCreate, LoginRequest, Token, RepositoryCreate, UserCreated
 from security import (
     hash_password,
     verify_password,
     create_access_token,
 )
+
+import subprocess, sys, os
+from pathlib import Path
 
 # User queries
 # Sign up user crud request
@@ -89,15 +92,29 @@ async def read_user_by_id(
 
 
 # Repo Queries
-async def create_repo(
+async def create_repository(
     db: AsyncSession,
-    repo_data: RepoCreate,
+    repo_data: RepositoryCreate,
     user_id: int
-) -> Repo:
+) -> Repository:
 
-    new_repo = Repo(
-        title=repo_data.title,
-        link=repo_data.link,
+    query = (
+        select(Repository)
+        .where(Repository.id == user_id,
+               Repository.url == repo_data.url)
+    )
+
+    result = await db.execute(query)
+
+    existing_repo = result.scalar_one_or_none()
+
+    if(existing_repo):
+        return existing_repo
+    
+    new_repo = Repository(
+        url=repo_data.url,
+        local_path="",
+        status="pending",
         user_id=user_id,
     )
 
@@ -106,16 +123,38 @@ async def create_repo(
     await db.commit()
     await db.refresh(new_repo)
 
+
+    # Adding Repository to Folders
+    # For clonning, I would like to later think about people who have some access to private repos, and # they want to clone them, but if they want to clone them, they should authintcate with their github
+    # if not, it will not show the repos
+    #username_github = os.getenv("GITHUB_USER")
+
+    repository_id = new_repo.id
+    storage_destination = Path("/app/storage/repositories") / str(repository_id)
+    storage_destination.mkdir(parents=True, exist_ok=True)
+
+    new_repo.local_path = str(storage_destination)
+
+    result = subprocess.run(["git", "clone", "--depth", "1", repo_data.url, str(storage_destination)], text=True, capture_output= True)
+
+    if result.returncode == 0:
+        new_repo.status = "ready"
+    else:
+        new_repo.status = "failed"
+        
+    await db.commit()
+    await db.refresh(new_repo)
+
     return new_repo
 
-async def read_repo(
+async def read_repository(
     db: AsyncSession,
     repo_id: int
-) -> Repo | None:
+) -> Repository | None:
 
     query = (
-        select(Repo)
-        .where(Repo.id == repo_id)
+        select(Repository)
+        .where(Repository.id == repo_id)
     )
 
     result = await db.execute(query)

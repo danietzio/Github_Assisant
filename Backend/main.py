@@ -46,7 +46,6 @@ async def create_user_endpoint(
 
 # Login Process
 @app.post("/auth/login", response_model=schemas.Token, status_code=status.HTTP_200_OK)
-
 async def login_user_endpoint(
     user_in: schemas.LoginRequest,
     db: AsyncSession = Depends(get_db),
@@ -57,8 +56,19 @@ async def login_user_endpoint(
     return token
 
 @app.get("/users/get", response_model=schemas.UserRead, status_code=status.HTTP_200_OK)
-
 async def get_my_profile(
     current_user: User = Depends(get_current_user)
 ):
     return current_user
+
+@app.post("/repositories", response_model=schemas.RepositoryRead, status_code=status.HTTP_201_CREATED)
+async def getRepository(
+    repo_in: schemas.RepositoryCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    # Error handling should be here or somewhere later
+    repository = await crud.create_repository(db, repo_in, current_user.id)
+
+    return  repository

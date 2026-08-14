@@ -15,18 +15,19 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(100))
     hashed_password: Mapped[str] = mapped_column(String(255))
 
-    liked_repos: Mapped[list["Repo"]] = relationship(
+    liked_repos: Mapped[list["Repository"]] = relationship(
         back_populates="user"
     )
 
 
-class Repo(Base):
+class Repository(Base):
     __tablename__ = "repos"
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    title: Mapped[str] = mapped_column(String(100))
-    link: Mapped[str] = mapped_column(String)
+    url: Mapped[str] = mapped_column(String)
+    local_path: Mapped[str] = mapped_column(String)
+    status: Mapped[str] = mapped_column(String)
 
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id")

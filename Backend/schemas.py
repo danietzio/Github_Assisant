@@ -1,19 +1,16 @@
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class RepoBase(BaseModel):
-    title: str
-    link: str
+class RepositoryCreate(BaseModel):
+    url: str
 
 
-class RepoCreate(RepoBase):
-    pass
-
-
-class RepoRead(RepoBase):
+class RepositoryRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    url: str
+    status: str
 
 
 class UserBase(BaseModel):
@@ -33,7 +30,7 @@ class UserRead(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    liked_repos: list[RepoRead] = Field(
+    liked_repos: list[RepositoryRead] = Field(
         default_factory=list
     )
 
