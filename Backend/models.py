@@ -1,9 +1,7 @@
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+from pgvector.sqlalchemy import Vector
 from database import Base
-
-
 
 class User(Base):
     __tablename__ = "users"
@@ -21,7 +19,7 @@ class User(Base):
 
 
 class Repository(Base):
-    __tablename__ = "repos"
+    __tablename__ = "repositories"
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
@@ -63,3 +61,16 @@ class QuestionAnswer(Base):
     conversation: Mapped["Conversation"] = relationship(
         back_populates="question_answers"
     )
+
+
+class CodeChunk(Base):
+    __tablename__ = "code_chunks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    local_path: Mapped[str] = mapped_column(String(500))
+    start_line: Mapped[int] = mapped_column(Integer)
+    finish_line: Mapped[int] = mapped_column(Integer)
+    content: Mapped[str] = mapped_column(Text)
+    embedding: Mapped[list[float]] = mapped_column(Vector(384))
+
+    repository_id: Mapped[int] = mapped_column(ForeignKey("repositories.id"))

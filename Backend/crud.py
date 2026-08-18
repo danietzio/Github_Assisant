@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from models import User, Repository
+from models import User, Repository, CodeChunk
 from schemas import UserCreate, LoginRequest, Token, RepositoryCreate, UserCreated
 from security import (
     hash_password,
@@ -13,6 +13,8 @@ from security import (
 
 import subprocess, sys, os
 from pathlib import Path
+from ingestion.chunker import chunk_repository
+from ingestion.embedder import local_embedder
 
 # User queries
 # Sign up user crud request
@@ -139,6 +141,8 @@ async def create_repository(
 
     if result.returncode == 0:
         new_repo.status = "ready"
+        await chunk_repository(db, new_repo)
+
     else:
         new_repo.status = "failed"
         
@@ -160,3 +164,44 @@ async def read_repository(
     result = await db.execute(query)
 
     return result.scalar_one_or_none()
+
+
+async def answer_question(
+        db: AsyncSession,
+        question: str
+) -> str:
+
+    question_embedding = local_embedder(question)    
+
+    query = (
+        select(CodeChunk)
+        .order_by(
+          CodeChunk.embedding.cosine_distance(question_embedding)
+        )
+        .limit(5)
+    )
+
+    result = await db.execute(query)
+    chunks = result.scalars().all()
+
+    chunks = sorted(chunks, key= lambda chunk: (chunk.local_path, chunk.start_line))
+
+    context = "\n\n".join(
+        f"File: {chunk.local_path}\n"
+        f"lines: {chunk.start_line}-{chunk.finish_line}\n"
+        f"{chunk.content}"
+        for chunk in chunks
+    )
+
+    prompt = f"""
+    You are a code review assistant, 
+
+    Answer the user's question using the provided code context.local_embedder
+
+    Code Context:
+    {context}
+
+    user's Question:
+    {question}
+    """
+    # Where we write the prompt, add the query results and question, and ask ai to answer
