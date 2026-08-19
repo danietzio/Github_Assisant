@@ -15,6 +15,7 @@ import subprocess, sys, os
 from pathlib import Path
 from ingestion.chunker import chunk_repository
 from ingestion.embedder import local_embedder
+from mind import generate_answer
 
 # User queries
 # Sign up user crud request
@@ -205,3 +206,5 @@ async def answer_question(
     {question}
     """
     # Where we write the prompt, add the query results and question, and ask ai to answer
+
+    respone = generate_answer(prompt)
