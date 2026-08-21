@@ -11,6 +11,7 @@ from dependecies import get_current_user
 from models import User
 
 from fastapi.middleware.cors import CORSMiddleware
+from crud import answer_question
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -72,3 +73,11 @@ async def getRepository(
     repository = await crud.create_repository(db, repo_in, current_user.id)
 
     return  repository
+
+@app.post("/prompt", response_model=schemas.PromptResponse, status_code=status.HTTP_200_OK)
+async def prompt_endpoint(
+    prompt: schemas.Prompt,
+    db: AsyncSession = Depends(get_db),
+):
+    answer = await crud.answer_question(db, prompt.prompt)
+    return {"response": answer}

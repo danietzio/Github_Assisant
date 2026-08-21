@@ -43,3 +43,10 @@ class LoginRequest(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+class PromptResponse(BaseModel):
+    response: str
+
+class Prompt(BaseModel):
+    prompt: str

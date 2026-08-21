@@ -207,4 +207,6 @@ async def answer_question(
     """
     # Where we write the prompt, add the query results and question, and ask ai to answer
 
-    respone = generate_answer(prompt)
+    response = await generate_answer(prompt)
+
+    return response
