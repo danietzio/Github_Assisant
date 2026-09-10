@@ -1,45 +1,79 @@
 'use client';
 
-import { stringify } from 'querystring';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Login() {
-  const [token, setToken] = useState(null);
-
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
 
-  async function loginUser() {
-    const response = await fetch('http://localhost:8000/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username,
-        password,
-      }),
-    });
+  async function loginUser(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
 
-    const data = await response.json();
+    setError('');
+    setIsLoading(true);
 
-    setToken(data);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
 
-    if (data.access_token) {
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.detail || 'Login failed');
+        return;
+      }
+
       localStorage.setItem('access_token', data.access_token);
+
       router.push('/dashboard');
+    } catch (error) {
+      setError('Unable to connect to the server.');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
   return (
     <div>
-      This is the login page
-      <input value={username} onChange={(e) => setUsername(e.target.value)} />
-      <input value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button onClick={loginUser}>Register</button>
+      <h1>Login</h1>
+
+      <form onSubmit={loginUser}>
+        <input
+          type='text'
+          placeholder='Username'
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+
+        <input
+          type='password'
+          placeholder='Password'
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+
+        {error && <p>{error}</p>}
+
+        <button type='submit' disabled={isLoading}>
+          {isLoading ? 'Logging in...' : 'Login'}
+        </button>
+      </form>
     </div>
   );
 }
