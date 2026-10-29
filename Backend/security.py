@@ -4,10 +4,12 @@ from jose import jwt
 import os
 
 # Defining the varibles
-SECRET_KEY = os.getenv("SECRET_KEY", "placeholder-key-for-me")
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+if not SECRET_KEY:
+  raise RuntimeError("SECRET_KEY IS MISSING")
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 

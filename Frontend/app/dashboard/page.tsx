@@ -10,9 +10,10 @@ export default function dashboard() {
   const token = useRef<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [promptResponse, setPromptResponse] = useState('');
+  const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
   async function createRepository() {
-    const response = await fetch('http://localhost:8000/repositories', {
+    const response = await fetch(`${apiURL}/repositories`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -28,7 +29,7 @@ export default function dashboard() {
   }
 
   async function sendPrompt() {
-    const response = await fetch('http://localhost:8000/prompt', {
+    const response = await fetch(`${apiURL}/prompt`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -2,6 +2,8 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import IntegrityError
+import logging
 
 from models import User, Repository, CodeChunk
 from schemas import UserCreate, LoginRequest, Token, RepositoryCreate, UserCreated
@@ -17,6 +19,8 @@ from ingestion.chunker import chunk_repository
 from ingestion.embedder import local_embedder
 from mind import generate_answer
 
+
+logger = logging.getLogger("uvicorn.error")
 # User queries
 # Sign up user crud request
 async def create_user(
@@ -32,9 +36,15 @@ async def create_user(
 
     db.add(new_user)
 
-    await db.commit()
-    await db.refresh(new_user)
+    try:
+        await db.commit()
+        await db.refresh(new_user)
 
+    except IntegrityError as exc:
+        await db.rollback()
+
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Something wrong when registering user")
     return new_user
 
 
@@ -145,6 +155,12 @@ async def create_repository(
         await chunk_repository(db, new_repo)
 
     else:
+        logger.error(
+            "Clone failed: repos_id:%s, error: %s, stderr:%s",
+            new_repo.id,
+            result.returncode,
+            result.stderr.strip()
+        )
         new_repo.status = "failed"
         
     await db.commit()

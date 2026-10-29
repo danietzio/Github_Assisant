@@ -10,7 +10,8 @@ export default function SignUp() {
   const [id, setId] = useState(0);
 
   async function registerUser() {
-    const response = await fetch('http://localhost:8000/auth/signup', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const response = await fetch(`${apiUrl}/auth/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
