@@ -14,7 +14,7 @@ async def chunk_repository(
 
     repo_path = Path(repo.local_path)
 
-    allowed_extensions = {".py", ".js", ".jsx", ".ts"}
+    allowed_extensions = {".py", ".js", ".jsx", ".ts", ".rs", ".cpp", "c", }
 
     SPLIT_SIZE = 50
 
@@ -81,6 +81,6 @@ async def chunk_repository(
     # 4. One database commit
     await db.commit()
 
-    print(f"Repo chunked: {len(chunk_list)} chunks")
+    print(f"Repo chunked: {len(chunk_list)} chunks", flush=True)
 
     return chunk_list

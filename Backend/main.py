@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 
 import crud
 import schemas
@@ -17,6 +18,7 @@ from crud import answer_question
 async def lifespan(app: FastAPI):
 
     async with engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)
 
     yield
